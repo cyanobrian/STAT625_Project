@@ -1,0 +1,10 @@
+---
+title: "STAT625_Project"
+author: "Brian Zhang, Vi Mai, Xinyu Zhou (Anna), Ziyan Zhao"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+```{r}
+data <- read.csv("Walmart.csv")
+head(data)
+```
