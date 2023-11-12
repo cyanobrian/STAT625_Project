@@ -18,22 +18,24 @@ walmart["Days_since"] <- days_elapsed
 head(walmart)
 ```
 ```{r}
-plot(log(Weekly_Sales) ~ Days_since + Store , data = walmart, 
+# Comparing the need for a log transformation on Weekly Sales 
+full_mod_no_log <- lm(Weekly_Sales ~ Days_since + Unemployment + CPI + Fuel_Price + Temperature + Holiday_Flag, data = walmart)
+plot(full_mod_no_log,
+     col = rgb(red = 0, green = 0, blue = 0, alpha = 0.25), 
+     pch = 16
+)
+
+full_mod_w_log <- lm(log(Weekly_Sales) ~ Days_since + Unemployment + CPI + Fuel_Price + Temperature + Holiday_Flag, data = walmart)
+plot(full_mod_w_log,
+     col = rgb(red = 0, green = 0, blue = 0, alpha = 0.25), 
+     pch = 16
+)
+```
+
+```{r}
+# Looking at effect of Days and Store on log(Weekly Sales)
+plot(log(Weekly_Sales) ~ Days_since + Store + Temperature, data = walmart, 
      col = alpha(walmart$Store, 0.5),  # makes color dependent on store 
      pch = 16,
      cex = 0.6)
-```
-
-
-
-
-
-```{r}
-plot(data$Holiday_Flag, log(data$Weekly_Sales))
-plot(log(data$Weekly_Sales))
-boxplot(log(subset(data, Holiday_Flag == 1)$Weekly_Sales))
-boxplot(log(subset(data, Holiday_Flag == 0)$Weekly_Sales))
-boxplot(log(Weekly_Sales) ~ Holiday_Flag, data = data)
-
-plot(data$Store, log(data$Weekly_Sales))
 ```
