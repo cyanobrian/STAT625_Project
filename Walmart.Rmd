@@ -5,6 +5,7 @@ date: "`r Sys.Date()`"
 output: pdf_document
 ---
 ```{r}
+library(ggplot2)
 rm(list = ls())
 walmart <- read.csv("Walmart.csv")
 head(walmart)
