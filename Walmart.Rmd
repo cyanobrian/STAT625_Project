@@ -5,6 +5,35 @@ date: "`r Sys.Date()`"
 output: pdf_document
 ---
 ```{r}
-data <- read.csv("Walmart.csv")
-head(data)
+rm(list = ls())
+walmart <- read.csv("Walmart.csv")
+head(walmart)
+```
+```{r}
+# Convert the dates from character strings into days since the first date 
+asDate_result <- as.Date(walmart$Date, "%d-%m-%Y")
+first_date <- min(asDate_result)
+days_elapsed <- asDate_result-first_date
+walmart["Days_since"] <- days_elapsed
+head(walmart)
+```
+```{r}
+plot(log(Weekly_Sales) ~ Days_since + Store , data = walmart, 
+     col = alpha(walmart$Store, 0.5),  # makes color dependent on store 
+     pch = 16,
+     cex = 0.6)
+```
+
+
+
+
+
+```{r}
+plot(data$Holiday_Flag, log(data$Weekly_Sales))
+plot(log(data$Weekly_Sales))
+boxplot(log(subset(data, Holiday_Flag == 1)$Weekly_Sales))
+boxplot(log(subset(data, Holiday_Flag == 0)$Weekly_Sales))
+boxplot(log(Weekly_Sales) ~ Holiday_Flag, data = data)
+
+plot(data$Store, log(data$Weekly_Sales))
 ```
