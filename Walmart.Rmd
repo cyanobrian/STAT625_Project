@@ -10,6 +10,10 @@ rm(list = ls())
 walmart <- read.csv("Walmart.csv")
 head(walmart)
 ```
+
+### Data Preprocessing 
+
+Since dates are strings, they must be converted to parsed and converted to days. Use days since the first day rather than the actual date to make computation easier. 
 ```{r}
 # Convert the dates from character strings into days since the first date 
 asDate_result <- as.Date(walmart$Date, "%d-%m-%Y")
@@ -18,6 +22,8 @@ days_elapsed <- asDate_result-first_date
 walmart["Days_since"] <- days_elapsed
 head(walmart)
 ```
+
+### Initial Diagnostic Plots 
 ```{r}
 # Comparing the need for a log transformation on Weekly Sales 
 full_mod_no_log <- lm(Weekly_Sales ~ Days_since + Unemployment + CPI + Fuel_Price + Temperature + Holiday_Flag, data = walmart)
