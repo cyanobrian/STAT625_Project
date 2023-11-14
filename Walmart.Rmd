@@ -6,6 +6,7 @@ output: pdf_document
 ---
 ```{r}
 library(lmerTest)
+library(car)
 library(ggplot2)
 rm(list = ls())
 walmart <- read.csv("Walmart.csv")
