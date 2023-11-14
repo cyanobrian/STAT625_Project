@@ -5,6 +5,7 @@ date: "`r Sys.Date()`"
 output: pdf_document
 ---
 ```{r}
+library(lmerTest)
 library(ggplot2)
 rm(list = ls())
 walmart <- read.csv("Walmart.csv")
@@ -40,9 +41,41 @@ plot(full_mod_w_log,
 ```
 
 ```{r}
+# Fit a mixed model, look at residual plots
+mixed_effect_mod <- lmer(Weekly_Sales ~ (1|Store) + Days_since + Unemployment + CPI + Fuel_Price + Temperature + Holiday_Flag, data=walmart)
+plot(mixed_effect_mod)
+
+mixed_effect_mod_log <- lmer(log(Weekly_Sales) ~ (1|Store) + Days_since + Unemployment + CPI + Fuel_Price + Temperature + Holiday_Flag, data=walmart)
+plot(mixed_effect_mod_log)
+
+mixed_effect_mod_sqrt<- lmer(sqrt(Weekly_Sales) ~ (1|Store) + Days_since + Unemployment + CPI + Fuel_Price + Temperature + Holiday_Flag, data=walmart)
+plot(mixed_effect_mod_sqrt)
+```
+
+No transformation on Weekly Sales and sqrt(Weekly Sales) show a megaphone effect, nonconstant variance. However, the log transformation on Weekly Sales seems to get rid of the megaphone appearance of the residuals, indicating constant variance. Thus, the log transformation may be the most appropriate. 
+
+```{r}
+# QQ plots for different models 
+qqPlot(residuals(full_mod_no_log))
+qqPlot(residuals(full_mod_w_log))
+qqPlot(residuals(mixed_effect_mod))
+qqPlot(residuals(mixed_effect_mod_log))
+```
+
+The full model without the log transform shows residuals that are most close to a normal distribution. However, all show deviations at lower normal quantiles and higher normal quantiles. When comparing the mixed effect on store on log(Weekly Sales) versus a mixed effect on store on Weekly Sales, the one with the log transformation appears to be more close to a normal distribution. 
+
+
+
+### Scatterplot with variabels vs log(Weekly_Sales)
+```{r}
 # Looking at effect of Days and Store on log(Weekly Sales)
-plot(log(Weekly_Sales) ~ Days_since + Store + Temperature, data = walmart, 
+plot(log(Weekly_Sales) ~ Days_since + Store + Temperature + Unemployment + CPI + Fuel_Price + Temperature + Holiday_Flag, data = walmart, 
      col = alpha(walmart$Store, 0.5),  # makes color dependent on store 
      pch = 16,
      cex = 0.6)
+```
+
+```{r}
+# Scatterplot matrix - uninterprettable
+pairs(Weekly_Sales ~ Days_since + Unemployment + CPI + Fuel_Price + Temperature + Holiday_Flag, data = walmart)
 ```
