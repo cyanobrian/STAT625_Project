@@ -61,6 +61,9 @@ qqPlot(residuals(full_mod_no_log))
 qqPlot(residuals(full_mod_w_log))
 qqPlot(residuals(mixed_effect_mod))
 qqPlot(residuals(mixed_effect_mod_log))
+
+# qq plot for random effects 
+#qqPlot(ranef(mixed_effect_mod_log)$Store$`(Intercept)`)
 ```
 
 The full model without the log transform shows residuals that are most close to a normal distribution. However, all show deviations at lower normal quantiles and higher normal quantiles. When comparing the mixed effect on store on log(Weekly Sales) versus a mixed effect on store on Weekly Sales, the one with the log transformation appears to be more close to a normal distribution. 
@@ -80,3 +83,23 @@ plot(log(Weekly_Sales) ~ Days_since + Store + Temperature + Unemployment + CPI +
 # Scatterplot matrix - uninterprettable
 pairs(Weekly_Sales ~ Days_since + Unemployment + CPI + Fuel_Price + Temperature + Holiday_Flag, data = walmart)
 ```
+
+
+### Lag Regression 
+
+#### Lag Regression for Holiday
+```{r}
+# Create lag variable on Holiday
+unique_days <- unique(walmart$Days_since)
+holiday_flag <- c()
+log_average_sales <- c()
+for(day in unique_days){
+  holiday_flag <- append(holiday_flag, (walmart$Holiday_Flag[walmart$Days_since == day][1]))
+  log_average_sales <- append(average_sales, mean(log(walmart$Weekly_Sales[walmart$Days_since == day])))
+}
+
+ccf_vals <- ccf(holiday_flag, log_average_sales, 4)
+ccf_vals
+```
+
+Most significant correlation was when holiday is given a lag of +1, $log(weekly\_sales)$  $holiday_{t+1}$ most strong correlated. Sales are higher the week before a holiday rather than the week of a holiday. 
