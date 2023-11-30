@@ -1,0 +1,108 @@
+---
+title: "STAT625_Project"
+author: "Brian Zhang, Vi Mai, Xinyu Zhou (Anna), Ziyan Zhao"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+```{r}
+rm(list = ls())
+walmart <- read.csv("~/Documents/Stat 625/Project/Walmart.csv")
+head(walmart)
+```
+
+### Data Preprocessing 
+
+Since dates are strings, they must be converted to parsed and converted to days. Use days since the first day rather than the actual date to make computation easier. 
+```{r}
+# Convert the dates from character strings into days since the first date 
+asDate_result <- as.Date(walmart$Date, "%d-%m-%Y")
+first_date <- min(asDate_result)
+days_elapsed <- asDate_result-first_date
+walmart["Days_since"] <- days_elapsed
+head(walmart)
+```
+
+# Scatterplot matrix - uninterprettable
+
+```{r}
+pairs(Weekly_Sales ~ Days_since + Unemployment + CPI + Fuel_Price + Temperature + Holiday_Flag, data = walmart)
+```
+
+```{r}
+selected_columns <- c("Weekly_Sales", "Days_since", "Unemployment", "CPI", "Fuel_Price", "Temperature", "Holiday_Flag")
+selected_data <- walmart[selected_columns]
+correlation_matrix <- cor(selected_data[, sapply(selected_data, is.numeric)], use = "complete.obs")
+correlation_matrix
+
+heatmap(correlation_matrix, 
+        col = colorRampPalette(c("blue", "white", "red"))(20),
+        main = "Correlation Matrix")
+
+library(corrplot)
+corrplot(correlation_matrix, type = "upper", order = "hclust", 
+         tl.col = "black", tl.srt = 45)
+```
+
+### Scatterplot with CPI vs others
+
+```{r}
+library(tidyverse)
+plot(CPI ~ Store + Days_since + log(Weekly_Sales) + Holiday_Flag + Temperature + Fuel_Price + Unemployment, data = walmart, 
+     col = alpha(walmart$Store, 0.5),  # makes color dependent on store 
+     pch = 16,
+     cex = 0.6)
+```
+
+CPI increases over time.
+CPI does not affect sales.
+
+
+### Scatterplot with Unemployment vs others
+
+```{r}
+plot(Unemployment ~ Store + Days_since + log(Weekly_Sales) + Holiday_Flag + Temperature + Fuel_Price + CPI, data = walmart, 
+     col = alpha(walmart$Store, 0.5),  # makes color dependent on store 
+     pch = 16,
+     cex = 0.6)
+```
+
+The unemployment rate decreases over time.
+Sales are affected by the unemployment rate, so the higher the unemployment rate, the lower the sales.
+Unemployment seems like a good predictor of the weekly sales, the higher the unemployment rate, the lower the weekly sales.
+
+### Scatterplot with CPI + Unemployment vs others
+
+```{r}
+plot(CPI + Unemployment ~ Store + Days_since + log(Weekly_Sales) + Holiday_Flag + Temperature + Fuel_Price, data = walmart, 
+     col = alpha(walmart$Store, 0.5),  # makes color dependent on store 
+     pch = 16,
+     cex = 0.6)
+```
+CPI + Unemployment increases over time.
+
+lagged model
+
+```{r}
+# Assuming CPI is in a column called "CPI" and Weekly_Sales in "log_Weekly_Sales"
+walmart$Date <- as.Date(walmart$Date, format="%d-%m-%Y")
+walmart$Days_since <- as.numeric(difftime(walmart$Date, min(walmart$Date), units = "days"))
+
+# Extract time series data for CPI
+time_series_cpi <- data.frame(Days_since = unique(walmart$Days_since), CPI = numeric(length(unique(walmart$Days_since))))
+for (day in unique(walmart$Days_since)) {
+  time_series_cpi$CPI[time_series_cpi$Days_since == day] <- walmart$CPI[walmart$Days_since == day][1]
+}
+
+# Extract time series data for log_Weekly_Sales
+time_series_log_sales <- data.frame(Days_since = unique(walmart$Days_since), log_Weekly_Sales = numeric(length(unique(walmart$Days_since))))
+for (day in unique(walmart$Days_since)) {
+  time_series_log_sales$log_Weekly_Sales[time_series_log_sales$Days_since == day] <- mean(log(walmart$Weekly_Sales[walmart$Days_since == day]))
+}
+
+ccf_result <- ccf(time_series_cpi$CPI, time_series_log_sales$log_Weekly_Sales, lag.max = 8)
+ccf_result
+```
+The highest positive autocorrelation is at lag 10, with a value of 0.101.  
+The positive autocorrelation values at lags 7 to 10 (0.072 to 0.101) suggest a positive relationship between the CPI and log(Weekly_Sales) with a lag of 7 to 10 time points. This means that high values of CPI at a particular time point are associated with high values of log(Weekly_Sales) at a lag of 7 to 10 time points.    
+The positive autocorrelation values at lags 1 to 6 (0.064 to 0.078) also indicate a positive relationship, but with a shorter lag.
+Thus, there is some degree of correlation between the CPI and log(Weekly_Sales) at various lags.

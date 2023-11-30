@@ -1,0 +1,295 @@
+---
+title: "STAT625_Project"
+author: "Brian Zhang, Vi Mai, Xinyu Zhou (Anna), Ziyan Zhao"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+```{r}
+rm(list = ls())
+walmart <- read.csv("~/Documents/Stat 625/Project/Walmart.csv")
+head(walmart)
+```
+
+### Data Preprocessing 
+
+Since dates are strings, they must be converted to parsed and converted to days. Use days since the first day rather than the actual date to make computation easier. 
+```{r}
+# Convert the dates from character strings into days since the first date 
+asDate_result <- as.Date(walmart$Date, "%d-%m-%Y")
+first_date <- min(asDate_result)
+days_elapsed <- asDate_result-first_date
+walmart["Days_since"] <- days_elapsed
+head(walmart)
+```
+```{r}
+# Convert the dates from character strings into days since the first date 
+asDate_result <- as.Date(walmart$Date, "%d-%m-%Y")
+first_date <- min(asDate_result)
+days_elapsed <- asDate_result-first_date
+walmart["Days_since"] <- days_elapsed
+walmart["Weeks_since"] <- ceiling(days_elapsed / 7)
+head(walmart)
+```
+
+### Scatterplot with Unemployment vs others
+
+```{r}
+library(ggplot2)
+
+# Assuming 'Store' is a factor variable
+walmart$Store <- as.factor(walmart$Store)
+
+ggplot(walmart, aes(x = Days_since, y = Unemployment)) +
+  geom_point(aes(color = Store), alpha = 0.5, size = 2) +
+  facet_wrap(~ Store, scales = "free") +
+  labs(title = "Scatterplot by Store",
+       x = "Days_since",
+       y = "Unemployment") +
+  theme_minimal()
+```
+
+# Weeks since
+
+```{r}
+library(ggplot2)
+
+# Assuming 'Store' is a factor variable
+walmart$Store <- as.factor(walmart$Store)
+
+ggplot(walmart, aes(x = Weeks_since, y = Unemployment)) +
+  geom_point(aes(color = Store), alpha = 0.5, size = 2) +
+  facet_wrap(~ Store, scales = "free") +
+  labs(title = "Scatterplot by Store",
+       x = "Weeks_since",
+       y = "Unemployment") +
+  theme_minimal()
+```
+
+```{r}
+# Assuming 'Store' is a factor variable
+walmart$Store <- as.factor(walmart$Store)
+
+ggplot(walmart, aes(x = log(Weekly_Sales), y = Unemployment)) +
+  geom_point(aes(color = Store), alpha = 0.5, size = 2) +
+  facet_wrap(~ Store, scales = "free") +
+  labs(title = "Scatterplot by Store",
+       x = "log(Weekly_Sales)",
+       y = "Unemployment") +
+  theme_minimal()
+```
+
+```{r}
+# Assuming 'Store' is a factor variable
+walmart$Store <- as.factor(walmart$Store)
+
+ggplot(walmart, aes(x = Holiday_Flag, y = Unemployment)) +
+  geom_point(aes(color = Store), alpha = 0.5, size = 2) +
+  facet_wrap(~ Store, scales = "free") +
+  labs(title = "Scatterplot by Store",
+       x = "Holiday_Flag",
+       y = "Unemployment") +
+  theme_minimal()
+```
+# Boxplot for Unemployment based on Holiday_Flag
+```{r}
+library(ggplot2)
+
+# Assuming 'Holiday_Flag' is a factor variable
+walmart$Holiday_Flag <- as.factor(walmart$Holiday_Flag)
+
+# Boxplot for Unemployment based on Holiday_Flag
+ggplot(walmart, aes(x = Holiday_Flag, y = Unemployment, fill = Holiday_Flag)) +
+  geom_boxplot() +
+  labs(title = "Boxplot for Unemployment by Holiday Flag",
+       x = "Holiday Flag",
+       y = "Unemployment") +
+  theme_minimal()
+
+```
+
+```{r}
+# Assuming 'Store' is a factor variable
+walmart$Store <- as.factor(walmart$Store)
+
+ggplot(walmart, aes(x = Temperature, y = Unemployment)) +
+  geom_point(aes(color = Store), alpha = 0.5, size = 2) +
+  facet_wrap(~ Store, scales = "free") +
+  labs(title = "Scatterplot by Store",
+       x = "Temperature",
+       y = "Unemployment") +
+  theme_minimal()
+```
+
+```{r}
+# Assuming 'Store' is a factor variable
+walmart$Store <- as.factor(walmart$Store)
+
+ggplot(walmart, aes(x = Fuel_Price, y = Unemployment)) +
+  geom_point(aes(color = Store), alpha = 0.5, size = 2) +
+  facet_wrap(~ Store, scales = "free") +
+  labs(title = "Scatterplot by Store",
+       x = "Fuel_Price",
+       y = "Unemployment") +
+  theme_minimal()
+```
+
+```{r}
+# Assuming 'Store' is a factor variable
+walmart$Store <- as.factor(walmart$Store)
+
+ggplot(walmart, aes(x = CPI, y = Unemployment)) +
+  geom_point(aes(color = Store), alpha = 0.5, size = 2) +
+  facet_wrap(~ Store, scales = "free") +
+  labs(title = "Scatterplot by Store",
+       x = "CPI",
+       y = "Unemployment") +
+  theme_minimal()
+```
+
+### Scatterplot with CPI vs others
+
+```{r}
+# Assuming 'Store' is a factor variable
+walmart$Store <- as.factor(walmart$Store)
+
+ggplot(walmart, aes(x = Days_since, y = CPI)) +
+  geom_point(aes(color = Store), alpha = 0.5, size = 2) +
+  facet_wrap(~ Store, scales = "free") +
+  labs(title = "Scatterplot by Store",
+       x = "Days_since",
+       y = "CPI") +
+  theme_minimal()
+```
+# Weeks since
+
+```{r}
+# Assuming 'Store' is a factor variable
+walmart$Store <- as.factor(walmart$Store)
+
+ggplot(walmart, aes(x = Weeks_since, y = CPI)) +
+  geom_point(aes(color = Store), alpha = 0.5, size = 2) +
+  facet_wrap(~ Store, scales = "free") +
+  labs(title = "Scatterplot by Store",
+       x = "Weeks_since",
+       y = "CPI") +
+  theme_minimal()
+```
+
+```{r}
+# Assuming 'Store' is a factor variable
+walmart$Store <- as.factor(walmart$Store)
+
+ggplot(walmart, aes(x = log(Weekly_Sales), y = CPI)) +
+  geom_point(aes(color = Store), alpha = 0.5, size = 2) +
+  facet_wrap(~ Store, scales = "free") +
+  labs(title = "Scatterplot by Store",
+       x = "log(Weekly_Sales)",
+       y = "CPI") +
+  theme_minimal()
+```
+
+```{r}
+# Assuming 'Store' is a factor variable
+walmart$Store <- as.factor(walmart$Store)
+
+ggplot(walmart, aes(x = Holiday_Flag, y = CPI)) +
+  geom_point(aes(color = Store), alpha = 0.5, size = 2) +
+  facet_wrap(~ Store, scales = "free") +
+  labs(title = "Scatterplot by Store",
+       x = "Holiday_Flag",
+       y = "CPI") +
+  theme_minimal()
+```
+
+# Boxplot for CPI based on Holiday_Flag
+```{r}
+library(ggplot2)
+
+# Assuming 'Holiday_Flag' is a factor variable
+walmart$Holiday_Flag <- as.factor(walmart$Holiday_Flag)
+
+# Boxplot for CPI based on Holiday_Flag
+ggplot(walmart, aes(x = Holiday_Flag, y = CPI, fill = Holiday_Flag)) +
+  geom_boxplot() +
+  labs(title = "Boxplot for CPI by Holiday Flag",
+       x = "Holiday Flag",
+       y = "CPI") +
+  theme_minimal()
+```
+
+```{r}
+# Assuming 'Store' is a factor variable
+walmart$Store <- as.factor(walmart$Store)
+
+ggplot(walmart, aes(x = Temperature, y = CPI)) +
+  geom_point(aes(color = Store), alpha = 0.5, size = 2) +
+  facet_wrap(~ Store, scales = "free") +
+  labs(title = "Scatterplot by Store",
+       x = "Temperature",
+       y = "CPI") +
+  theme_minimal()
+```
+
+```{r}
+# Assuming 'Store' is a factor variable
+walmart$Store <- as.factor(walmart$Store)
+
+ggplot(walmart, aes(x = Fuel_Price, y = CPI)) +
+  geom_point(aes(color = Store), alpha = 0.5, size = 2) +
+  facet_wrap(~ Store, scales = "free") +
+  labs(title = "Scatterplot by Store",
+       x = "Fuel_Price",
+       y = "CPI") +
+  theme_minimal()
+```
+
+```{r}
+# Assuming 'Store' is a factor variable
+walmart$Store <- as.factor(walmart$Store)
+
+ggplot(walmart, aes(x = Unemployment, y = CPI)) +
+  geom_point(aes(color = Store), alpha = 0.5, size = 2) +
+  facet_wrap(~ Store, scales = "free") +
+  labs(title = "Scatterplot by Store",
+       x = "Unemployment",
+       y = "CPI") +
+  theme_minimal()
+```
+
+# lagged model
+
+```{r}
+# Assuming CPI is in a column called "CPI" and Weekly_Sales in "log_Weekly_Sales"
+walmart$Date <- as.Date(walmart$Date, format="%d-%m-%Y")
+walmart$Weeks_since <- as.numeric(difftime(walmart$Date, min(walmart$Date), units = "days")) / 7
+
+# Extract time series data for CPI
+time_series_cpi <- data.frame(Weeks_since = unique(walmart$Weeks_since), CPI = numeric(length(unique(walmart$Weeks_since))))
+for (week in unique(walmart$Weeks_since)) {
+  time_series_cpi$CPI[time_series_cpi$Weeks_since == week] <- walmart$CPI[walmart$Weeks_since == week][1]
+}
+
+# Extract time series data for log_Weekly_Sales
+time_series_log_sales <- data.frame(Weeks_since = unique(walmart$Weeks_since), log_Weekly_Sales = numeric(length(unique(walmart$Weeks_since))))
+for (week in unique(walmart$Weeks_since)) {
+  time_series_log_sales$log_Weekly_Sales[time_series_log_sales$Weeks_since == week] <- mean(log(walmart$Weekly_Sales[walmart$Weeks_since == week]))
+}
+
+ccf_result <- ccf(time_series_cpi$CPI, time_series_log_sales$log_Weekly_Sales, lag.max = 10)
+ccf_result
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
