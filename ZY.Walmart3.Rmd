@@ -1,0 +1,93 @@
+---
+title: "STAT625_Project"
+author: "Brian Zhang, Vi Mai, Xinyu Zhou (Anna), Ziyan Zhao"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+```{r}
+rm(list = ls())
+walmart <- read.csv("~/Documents/Stat 625/Project/Walmart.csv")
+head(walmart)
+```
+
+### Data Preprocessing 
+
+Since dates are strings, they must be converted to parsed and converted to days. Use days since the first day rather than the actual date to make computation easier. 
+```{r}
+# Convert the dates from character strings into days since the first date 
+asDate_result <- as.Date(walmart$Date, "%d-%m-%Y")
+first_date <- min(asDate_result)
+days_elapsed <- asDate_result-first_date
+walmart["Days_since"] <- days_elapsed
+head(walmart)
+```
+# Using forward selection:
+
+```{r}
+model1 <- lm(log(Weekly_Sales) ~ 1, data = walmart)
+step(model1, scope = ~ Days_since + Unemployment + CPI + Fuel_Price + Temperature + Holiday_Flag, direction="forward")
+```
+
+# Using backward elimination:
+
+```{r}
+model2 <- lm(log(Weekly_Sales) ~ Days_since + Unemployment + CPI + Fuel_Price + Temperature + Holiday_Flag, data = walmart)
+step(model2, scope = ~ 1, direction="backward")
+```
+
+To choose between the models obtained through forward selection and backward elimination. The model with the lower AIC is generally preferred because it indicates a better balance between goodness of fit and model complexity.    
+
+1. Forward Selection Model:      
+   AIC = -6962.1      
+2. Backward Elimination Model:     
+   AIC = -6962.1    
+   
+Both models have the same AIC value (-6962.1). Both models have the same predictors: Unemployment, CPI, Temperature, and Holiday_Flag.
+
+# Interaction terms 
+
+```{r}
+library(car)
+model3 <- lm(log(Weekly_Sales) ~ (Days_since + Unemployment + CPI + Fuel_Price + Temperature + Holiday_Flag)^6, data = walmart)
+Anova(model3, type="II")
+```
+
+The Analysis of Deviance Table (Type II tests) showcases the statistical significance of each factor and their interactions. The main effects (Unemployment, CPI, Fuel_Price and Temperature) exhibit highly significant p-values, indicating their individual impact on the response. The interaction term (Unemployment:Fuel_Price), (CPI:Fuel_Price), and (Fuel_Price:Holiday_Flag) are also highly significant. They have (***).
+
+
+# (Interaction term) Using forward selection:
+
+```{r}
+model4 <- lm(log(Weekly_Sales) ~ 1, data = walmart)
+interaction_scope <- ~ Days_since + Unemployment + CPI + Fuel_Price + Temperature + Holiday_Flag + 
+                       Unemployment:Fuel_Price + CPI:Fuel_Price + Fuel_Price:Holiday_Flag
+model5 <- step(model4, scope = interaction_scope, direction = "forward")
+```
+
+# (Interaction term) Using backward elimination:
+
+```{r}
+model6 <- lm(log(Weekly_Sales) ~ Days_since + Unemployment + CPI + Fuel_Price + Temperature + Holiday_Flag + 
+                                 Unemployment:Fuel_Price + CPI:Fuel_Price + Fuel_Price:Holiday_Flag, 
+                                 data = walmart)
+step(model6, scope = ~ 1, direction="backward")
+```
+
+Both models share common predictors: Unemployment, CPI, Temperature, and Holiday_Flag. The forward selection model does not include Fuel_Price, while the backward elimination model includes Fuel_Price and an interaction term (CPI:Fuel_Price).
+
+1. Forward Selection Model:      
+   AIC = -6962.06    
+   log(Weekly_Sales) ~ Temperature + Unemployment + CPI + Holiday_Flag      
+2. Backward Elimination Model:      
+   AIC = -6969.26      
+   log(Weekly_Sales) ~ Unemployment + CPI + Fuel_Price + Temperature + Holiday_Flag + CPI:Fuel_Price    
+
+Backward Elimination Model has lower AIC. So the final model is:     
+log(Weekly_Sales) ~ Unemployment + CPI + Fuel_Price + Temperature + Holiday_Flag + CPI:Fuel_Price
+
+
+
+
+
+
+
