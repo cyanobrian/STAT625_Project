@@ -23,6 +23,8 @@ first_date <- min(asDate_result)
 days_elapsed <- asDate_result-first_date
 walmart["Days_since"] <- days_elapsed
 head(walmart)
+
+
 ```
 
 ### Initial Diagnostic Plots 
@@ -63,7 +65,7 @@ qqPlot(residuals(mixed_effect_mod))
 qqPlot(residuals(mixed_effect_mod_log))
 
 # qq plot for random effects 
-#qqPlot(ranef(mixed_effect_mod_log)$Store$`(Intercept)`)
+qqPlot(ranef(mixed_effect_mod_log)$Store$`(Intercept)`)
 ```
 
 The full model without the log transform shows residuals that are most close to a normal distribution. However, all show deviations at lower normal quantiles and higher normal quantiles. When comparing the mixed effect on store on log(Weekly Sales) versus a mixed effect on store on Weekly Sales, the one with the log transformation appears to be more close to a normal distribution. 
@@ -95,11 +97,260 @@ holiday_flag <- c()
 log_average_sales <- c()
 for(day in unique_days){
   holiday_flag <- append(holiday_flag, (walmart$Holiday_Flag[walmart$Days_since == day][1]))
-  log_average_sales <- append(average_sales, mean(log(walmart$Weekly_Sales[walmart$Days_since == day])))
+  log_average_sales <- append(log_average_sales, mean(log(walmart$Weekly_Sales[walmart$Days_since == day])))
 }
+
+
 
 ccf_vals <- ccf(holiday_flag, log_average_sales, 4)
 ccf_vals
 ```
 
+```{r}
+
+#143
+```
+
+
+```{r}
+
+x<- data.frame()
+for(i in 1:45){
+  temp <- subset(walmart, walmart['Store'] == i)
+  acf <- ccf(temp$Temperature, log(temp$Weekly_Sale), 4, plot = FALSE, alpha = 0.05)$acf
+  x <- rbind(x, data.frame("Store" = rep(i, 9), "ACF" = acf, "Lag" = -4:4))
+  
+}
+
+plot(jitter(x$Lag), x$ACF, 
+     col = alpha(x$Store, 0.25),  # makes color dependent on store 
+     pch = 16, 
+     xlab = "Lag", 
+     ylab = "Autocorrelation Function")
+     title("Autocorrelation Plot Log(Weekly_Sales) vs. Temperature")
+abline(h = qnorm(0.025, sd = 1/sqrt(143)), lty = "dashed")
+abline(h = qnorm(0.975, sd = 1/sqrt(143)), lty = "dashed")
+
+#boxplot(ACF ~ Lag, data = x)
+#abline(h = qnorm(0.025, sd = 1/sqrt(143)), lty = "dashed")
+#abline(h = qnorm(0.975, sd = 1/sqrt(143)), lty = "dashed")
+```
+```{r}
+
+```
+```{r}
+ccf_vals <- ccf(walmart$Holiday_Flag, log(walmart$Weekly_Sales), 4)
+ccf_vals
+
+ccf_vals <- ccf(walmart$CPI, log(walmart$Weekly_Sales), 4)
+ccf_vals
+
+ccf_vals <- ccf(walmart$Fuel_Price, log(walmart$Weekly_Sales), 4)
+ccf_vals
+
+ccf_vals <- ccf(walmart$Temperature, log(walmart$Weekly_Sales), 4)
+ccf_vals
+
+ccf_vals <- ccf(walmart$Unemployment, log(walmart$Weekly_Sales), 4)
+ccf_vals
+```
+
 Most significant correlation was when holiday is given a lag of +1, $log(weekly\_sales)$  $holiday_{t+1}$ most strong correlated. Sales are higher the week before a holiday rather than the week of a holiday. 
+
+```{r}
+holiday_next_week <- c()
+holiday <- walmart$Holiday_Flag
+store <- walmart$Store
+
+for(i in 1:(length(holiday)-1)) {
+  if((store[i] == store[i+1] & holiday[i+1] == 1)){
+    holiday_next_week <- append(holiday_next_week, 1)
+  }
+  else{
+    holiday_next_week <- append(holiday_next_week, 0)
+  }
+}
+holiday_next_week <- append(holiday_next_week, 0)
+  
+walmart <- cbind(walmart, holiday_next_week)
+```
+
+```{r}
+mod_with_lag <- lmer(log(Weekly_Sales) ~ (1|Store) + Unemployment + Fuel_Price +  holiday_next_week + Holiday_Flag, data=walmart)
+mod_with_out_lag <- lmer(log(Weekly_Sales) ~ (1|Store) + Unemployment + Fuel_Price + Holiday_Flag, data=walmart)
+plot(mod_with_lag)
+plot(mod_with_out_lag)
+anova(mod_with_out_lag, mod_with_lag)
+```
+
+
+
+```{r}
+plot(fitted(mod_with_out_lag), residuals(mod_with_out_lag), col = alpha(walmart$holiday_next_week+2, 0.5),      pch = 16,
+     cex = 1)
+plot(fitted(mod_with_lag), residuals(mod_with_lag), col = alpha(walmart$holiday_next_week+2, 0.5),      pch = 16,
+     cex = 1)
+```
+
+```{r}
+plot(fitted(mixed_effect_mod_log), residuals(mixed_effect_mod_log), col = alpha(walmart$holiday_next_week+1, 0.5),
+     pch = 16,
+     cex = 1)
+```
+
+
+```{r}
+Weekly_Sales ~ Days_since + Unemployment + CPI + Fuel_Price + Temperature + Holiday_Flag, data = walmart
+```
+
+
+
+```{r}
+model1 <- lmer(log(Weekly_Sales) ~ (1|Store), data = walmart)
+step(model1, scope = ~ Days_since + Unemployment + CPI + Fuel_Price + Temperature + Holiday_Flag, direction="forward", reduce.random=FALSE)
+```
+
+```{r}
+model2 <- lmer(log(Weekly_Sales) ~ (1|Store) + Days_since + Unemployment + CPI + Fuel_Price + Temperature + Holiday_Flag, data = walmart)
+step(model2, scope = ~ 1, direction="backward")
+```
+```{r}
+model1 <- lm(log(Weekly_Sales) ~ 1, data = walmart)
+step(model1, scope = ~ Days_since + Unemployment + CPI + Fuel_Price + Temperature + Holiday_Flag, direction="forward")
+```
+
+```{r}
+# lmer(log(Weekly_Sales) ~ (1|Store) + Unemployment + Fuel_Price + Holiday_Flag + holiday_next_week, data = walmart)
+final_model <- lmer(log(Weekly_Sales) ~ (1|Store) + Days_since + Unemployment + CPI + Fuel_Price + Temperature + Holiday_Flag + holiday_next_week, data = walmart)
+final_model2 <- lm(log(Weekly_Sales) ~ Days_since + Unemployment + CPI + Fuel_Price + Temperature + Holiday_Flag + holiday_next_week, data = walmart)
+
+```
+
+```{r}
+average_temp <- c()
+for(i in 1:45){
+  temp <- subset(walmart, walmart['Store'] == i)
+  average_temp <- append(average_temp, (temp$Temperature - mean(temp$Temperature)))
+}
+walmart <- cbind(walmart, average_temp)
+```
+```{r}
+anova(lmer(log(Weekly_Sales) ~ (1|Store), data = walmart), lm(log(Weekly_Sales) ~ 1, data = walmart))
+```
+
+```{r}
+AIC(lmer(log(Weekly_Sales) ~ (1|Store) + Holiday_Flag + Temperature + Fuel_Price + CPI + Unemployment + Days_since , data = walmart))
+
+#remove holiday_Flag
+AIC(lmer(log(Weekly_Sales) ~ (1|Store) + Temperature + Fuel_Price + CPI + Unemployment + Days_since , data = walmart))
+#remove Temp
+AIC(lmer(log(Weekly_Sales) ~ (1|Store) + Holiday_Flag + Fuel_Price + CPI + Unemployment + Days_since , data = walmart))
+# remove Fuel_price
+AIC(lmer(log(Weekly_Sales) ~ (1|Store) + Holiday_Flag + Temperature + CPI + Unemployment + Days_since , data = walmart))
+#remove CPI 
+AIC(lmer(log(Weekly_Sales) ~ (1|Store) + Holiday_Flag + Temperature + Fuel_Price + Unemployment + Days_since , data = walmart))
+# remove Unemployment
+AIC(lmer(log(Weekly_Sales) ~ (1|Store) + Holiday_Flag + Temperature + Fuel_Price + CPI + Days_since , data = walmart))
+#remove Days_since 
+AIC(lmer(log(Weekly_Sales) ~ (1|Store) + Holiday_Flag + Temperature + Fuel_Price + CPI + Unemployment , data = walmart))
+```
+```{r}
+#AIC minimized by removing days_since 
+# Remove Holiday_Flag
+AIC(lmer(log(Weekly_Sales) ~ (1|Store) + Temperature + Fuel_Price + CPI + Unemployment , data = walmart))
+# Remove Temperature
+AIC(lmer(log(Weekly_Sales) ~ (1|Store) + Holiday_Flag + Fuel_Price + CPI + Unemployment , data = walmart))
+# Remove Fuel_Price
+AIC(lmer(log(Weekly_Sales) ~ (1|Store) + Holiday_Flag + Temperature + CPI + Unemployment , data = walmart))
+#REmove CPI
+AIC(lmer(log(Weekly_Sales) ~ (1|Store) + Holiday_Flag + Temperature + Fuel_Price + Unemployment , data = walmart))
+# Remove Unemployemnet
+AIC(lmer(log(Weekly_Sales) ~ (1|Store) + Holiday_Flag + Temperature + Fuel_Price + CPI , data = walmart))
+```
+
+```{r}
+#remove CPI AIC -8540.064
+
+#remove Holiday
+AIC(lmer(log(Weekly_Sales) ~ (1|Store) + Temperature + Fuel_Price + Unemployment , data = walmart))
+#remove Temperature
+AIC(lmer(log(Weekly_Sales) ~ (1|Store) + Holiday_Flag + Fuel_Price + Unemployment , data = walmart))
+#remove Fuel_Price
+AIC(lmer(log(Weekly_Sales) ~ (1|Store) + Holiday_Flag + Temperature + Unemployment , data = walmart))
+#remove Unemployment
+AIC(lmer(log(Weekly_Sales) ~ (1|Store) + Holiday_Flag + Temperature + Fuel_Price  , data = walmart))
+```
+
+```{r}
+# Remove Temperature -8548.986
+# Remove Holiday
+AIC(lmer(log(Weekly_Sales) ~ (1|Store)  + Fuel_Price + Unemployment , data = walmart))
+# Remove Fuel_Price
+AIC(lmer(log(Weekly_Sales) ~ (1|Store) + Holiday_Flag  + Unemployment , data = walmart))
+# Remove Unemployment
+AIC(lmer(log(Weekly_Sales) ~ (1|Store) + Holiday_Flag + Fuel_Price  , data = walmart))
+```
+
+
+```{r}
+AIC(lmer(log(Weekly_Sales) ~ (1|Store), data = walmart))
+```
+
+```{r}
+AIC(lmer(log(Weekly_Sales) ~ (1|Store) + Holiday_Flag, data = walmart))
+AIC(lmer(log(Weekly_Sales) ~ (1|Store) + Temperature, data = walmart))
+AIC(lmer(log(Weekly_Sales) ~ (1|Store) + Fuel_Price, data = walmart))
+AIC(lmer(log(Weekly_Sales) ~ (1|Store) + CPI, data = walmart))
+AIC(lmer(log(Weekly_Sales) ~ (1|Store) + Unemployment, data = walmart))
+AIC(lmer(log(Weekly_Sales) ~ (1|Store) + Days_since, data = walmart))
+```
+
+```{r}
+AIC(lmer(log(Weekly_Sales) ~ (1|Store) + Holiday_Flag + Temperature, data = walmart))
+AIC(lmer(log(Weekly_Sales) ~ (1|Store) + Holiday_Flag + Fuel_Price, data = walmart))
+AIC(lmer(log(Weekly_Sales) ~ (1|Store) + Holiday_Flag + CPI, data = walmart))
+AIC(lmer(log(Weekly_Sales) ~ (1|Store) + Holiday_Flag + Unemployment, data = walmart))
+AIC(lmer(log(Weekly_Sales) ~ (1|Store) + Holiday_Flag + Days_since, data = walmart))
+```
+
+```{r}
+AIC(lmer(log(Weekly_Sales) ~ (1|Store) + Holiday_Flag + Unemployment + Temperature, data = walmart))
+AIC(lmer(log(Weekly_Sales) ~ (1|Store) + Holiday_Flag + Unemployment + Fuel_Price, data = walmart))
+AIC(lmer(log(Weekly_Sales) ~ (1|Store) + Holiday_Flag + Unemployment + CPI, data = walmart))
+AIC(lmer(log(Weekly_Sales) ~ (1|Store) + Holiday_Flag + Unemployment + Days_since, data = walmart))
+```
+
+```{r}
+AIC(lmer(log(Weekly_Sales) ~ (1|Store) + Holiday_Flag + Unemployment + Fuel_Price + Temperature, data = walmart))
+AIC(lmer(log(Weekly_Sales) ~ (1|Store) + Holiday_Flag + Unemployment + Fuel_Price + CPI, data = walmart))
+AIC(lmer(log(Weekly_Sales) ~ (1|Store) + Holiday_Flag + Unemployment + Fuel_Price + Days_since, data = walmart))
+```
+
+
+
+
+### Final Model Stuff
+
+```{r}
+# Createa new regressor holiday next week 
+holiday_next_week <- c()
+holiday <- walmart$Holiday_Flag
+store <- walmart$Store
+
+for(i in 1:(length(holiday)-1)) {
+  if((store[i] == store[i+1] & holiday[i+1] == 1)){
+    holiday_next_week <- append(holiday_next_week, 1)
+  }
+  else{
+    holiday_next_week <- append(holiday_next_week, 0)
+  }
+}
+holiday_next_week <- append(holiday_next_week, 0)
+  
+walmart <- cbind(walmart, holiday_next_week)
+```
+
+```{r}
+# fit model
+mod_with_lag <- lmer(log(Weekly_Sales) ~ (1|Store) + Unemployment + Fuel_Price +  holiday_next_week + Holiday_Flag, data=walmart)
+```
